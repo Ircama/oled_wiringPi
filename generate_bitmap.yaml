@@ -1,0 +1,197 @@
+# For best rendering, fonts shall be Sans-serif monospaced
+
+# https://en.wikipedia.org/wiki/List_of_monospaced_typefaces
+default_configuration:
+  debug: false
+  grid_columns: 16  # Number of characters per row in the output image
+  grid_padding: 5  # Padding between characters in the grid
+  total_chars: 256  # ASCII 7 bit + 8-bit set
+  pad_width: 2
+  pad_height: 2
+  normal_grid_color: red
+  altered_grid_color: blue
+  blank_grid_color: green
+  char_width: 8
+  char_x_anchor: 1
+  start_predefined_symbols: 0
+  start_predefined_high_symbols: 0
+  resize_image: 0  # 0=disabled; minimum suggested value is 8
+  png_extension: _preview.png
+
+c_structures:
+  array_declare_open: "const unsigned char %s[] = {"
+  array_declare_close: "};"
+  font_header_declare: "extern unsigned char %s[];"
+  header_file: generated_fonts.h
+
+insane_tunings:
+  target_height: 8
+  char_height: 8
+  aditional_width: 4
+  full_size_chars: "$1§#"
+  stroke_width: 0
+
+targets:
+  - FiraMono-Medium:  # https://bboxtype.com/typefaces/FiraMono/#!layout=specimen
+      generated_font_path: font_FiraMono_Medium.c
+      font_label: FiraMono-Medium5x8
+      font_name: "FiraMono-Medium.otf"
+      columns_to_crop: 3
+      reduce_font: 0
+      fixed_font_size: 9
+      disabled: true
+
+  - ProFont5x7:  # https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/ProFont/ProFontWinTweaked
+      font_url: https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/ProFont/ProFontWinTweaked/ProFontWindowsNerdFont-Regular.ttf
+      generated_font_path: font_ProFont5x7.c
+      font_label: ProFont5x7
+      font_name: "ProFontWindowsNerdFontMono-Regular.ttf"
+      char_width: 8
+      columns_to_crop: 3
+      reduce_font: 1
+      fixed_font_size: 12
+      start_predefined_symbols: 110
+      adjust:
+        ']':
+          - ........
+          - ........
+          - O......O
+          - OOOOOOOO
+          - ........
+          - ........
+          - ........
+          - ........
+        '[':
+          - ........
+          - ........
+          - ........
+          - OOOOOOOO
+          - O......O
+          - ........
+          - ........
+          - ........
+        '}':
+          - ........
+          - ........
+          - O......O
+          - OOOOOOOO
+          - ...O....
+          - ........
+          - ........
+          - ........
+        '{':
+          - ........
+          - ........
+          - ...O....
+          - OOOOOOOO
+          - O......O
+          - ........
+          - ........
+          - ........
+        'ì':
+          - ........
+          - ........
+          - .O......
+          - .OOOO0.O
+          - .O....O.
+          - ........
+          - ........
+          - ........
+        'í':
+          - ........
+          - ........
+          - .O....O.
+          - .OOOO0.O
+          - .O......
+          - ........
+          - ........
+          - ........
+        'î':
+          - ........
+          - ........
+          - .O....O.
+          - .OOOO..O
+          - .O....O.
+          - ........
+          - ........
+          - ........
+
+  - ProFont6x8:  # https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/ProFont/ProFontWinTweaked
+      font_url: https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/ProFont/ProFontWinTweaked/ProFontWindowsNerdFont-Regular.ttf
+      generated_font_path: font_ProFont6x8.c
+      font_label: ProFont6x8
+      font_name: "ProFontWindowsNerdFontMono-Regular.ttf"
+      char_width: 8
+      columns_to_crop: 2
+      reduce_font: 2
+      fixed_font_size: 13
+      start_predefined_symbols: 110
+
+  - ProFont8x8:  # https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/ProFont/ProFontWinTweaked
+      font_url: https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/ProFont/ProFontWinTweaked/ProFontWindowsNerdFont-Regular.ttf
+      generated_font_path: font_ProFont8x8.c
+      font_label: ProFont8x8
+      font_name: "ProFontWindowsNerdFontMono-Regular.ttf"
+      reduce_font: 2
+      fixed_font_size: 13
+      start_predefined_symbols: 110
+      resize_image: 11
+      char_width: 16
+      columns_to_crop: 8
+      #disabled: true
+
+  - ProFont10x8:  # https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/ProFont/ProFontWinTweaked
+      font_url: https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/ProFont/ProFontWinTweaked/ProFontWindowsNerdFont-Regular.ttf
+      generated_font_path: font_ProFont10x8.c
+      font_label: ProFont10x8
+      font_name: "ProFontWindowsNerdFontMono-Regular.ttf"
+      reduce_font: 2
+      fixed_font_size: 13
+      start_predefined_symbols: 110
+      resize_image: 20
+      char_width: 18
+      columns_to_crop: 8
+      #disabled: true
+
+  - OCR-BK5x8: # https://github.com/olibrauma/OCR-BK/blob/main/OCR-BK.otf
+      font_url: https://github.com/olibrauma/OCR-BK/raw/refs/heads/main/OCR-BK.otf
+      generated_font_path: font_OCR-BK.c
+      font_label: OCR-BK5x8
+      font_name: "OCR-BK.otf"
+      columns_to_crop: 3
+      reduce_font: 2
+      fixed_font_size: 9
+      char_width: 8
+      disabled: true
+
+  - Hermit_light4x8: # https://github.com/Swordfish90/cool-retro-term/blob/master/app/qml/fonts/modern-hermit/Hermit-light.otf
+      font_url: "https://github.com/Swordfish90/cool-retro-term/raw/refs/heads/master/app/qml/fonts/modern-hermit/Hermit-light.otf"
+      generated_font_path: font_Hermit_light4x8.c
+      font_label: Hermit_light4x8
+      font_name: "Hermit-light.otf"
+      char_width: 8
+      columns_to_crop: 4
+      reduce_font: 3
+      fixed_font_size: 11
+      start_predefined_symbols: 0
+      adjust:
+        'H':
+          - .OOOOOOO
+          - .....O..
+          - .....O..
+          - .OOOOOOO
+        'K':
+          - .OOOOOOO
+          - ...OO...
+          - ...OOOO.
+          - .OO....O
+        'M':
+          - .OOOOOOO
+          - ......O.
+          - .....OO.
+          - .OOOOOOO
+        'Q':
+          - OOOOOOO.
+          - O.O....O
+          - O......O
+          - .OOOOOO.
