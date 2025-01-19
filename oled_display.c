@@ -8,6 +8,12 @@
 #define SCL_PIN 23  // Clock pin
 #define M_DELAY 5 // I2C default microdelay
 
+#define COL_OFFSET 2
+    // Correct column offset: move by 2 pixels to align properly
+    // The SSD1306's addressing uses 6 pixels per character space, but the
+    // actual font is 5 pixels wide. Adding 2 pixels initially ensures that
+    // the character aligns correctly at the start of the column.
+
 #define OLED_WIDTH 128    // SSD1306 width in pixels
 #define OLED_HEIGHT 64    // SSD1306 height in pixels
 
@@ -121,7 +127,7 @@ void oled_clear_SSD1306(void) {
     oled_send_command(0x00);              // Start column address (0x00)
     oled_send_command(0x7F);              // End column address (0x7F for 128 pixels)
 
-    for (int page = 0; page < 8; page++) {  // 8 pages for 64 pixels
+    for (int page = 0; page < 8; page++) {  // 8 pages for 64 pixels; pages 0 to 7
         oled_send_command(0xB0 + page);     // Set page address (0xB0-0xB7)
 
         // Send a block of 132 zeroes in one go to clear the page
@@ -404,11 +410,7 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
     if (column < 0 || column >= OLED_WIDTH) return;
     if (line < 0 || line >= (OLED_HEIGHT / 8)) return;
 
-    // Correct column offset: move by 2 pixels to align properly
-    // The SSD1306's addressing uses 6 pixels per character space, but the
-    // actual font is 5 pixels wide. Adding 2 pixels initially ensures that
-    // the character aligns correctly at the start of the column.
-    column += 2;
+    column += COL_OFFSET; // Correct column offset
 
     // Set the column address range
     oled_send_command(0x21);              // Set column address command
@@ -420,6 +422,55 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
     oled_send_command(0x10 | (column >> 4)); // Set higher column address
 
     while (*text) {
+        // New line (wrap line and column 0) if ^n
+        if ((*text == '^') && (*(text + 1) == 'n')) {
+            text += 2;
+            column = COL_OFFSET;
+            line++;
+            oled_send_command(0xB0 + line); // Set new page address
+            oled_send_command(column & 0x0F);       // Set lower column address
+            oled_send_command(0x10 | (column >> 4)); // Set higher column address
+            continue;
+        }
+
+        // Carriage return (reset to column 0 without wrapping line) if ^r
+        if ((*text == '^') && (*(text + 1) == 'r')) {
+            text += 2;
+            column = COL_OFFSET;
+            oled_send_command(column & 0x0F);       // Set lower column address
+            oled_send_command(0x10 | (column >> 4)); // Set higher column address
+            continue;
+        }
+
+        // Up one line if ^u
+        if ((*text == '^') && (*(text + 1) == 'u')) {
+            text += 2;
+            line--;
+            oled_send_command(0xB0 + line); // Set new page address
+            continue;
+        }
+
+        // Down one line if ^d
+        if ((*text == '^') && (*(text + 1) == 'd')) {
+            text += 2;
+            line++;
+            oled_send_command(0xB0 + line); // Set new page address
+            continue;
+        }
+
+        // backspace if ^b
+        if ((*text == '^') && (*(text + 1) == 'b')) {
+            text += 2;
+            column--;
+            oled_send_command(column & 0x0F);       // Set lower column address
+            oled_send_command(0x10 | (column >> 4)); // Set higher column address
+            continue;
+        }
+
+        if ((*text == '^') && (*(text + 1) == '^')) {
+            text += 1;
+        }
+
         for (int i = 0; i < 5; i++) {
             oled_send_data(font[(*text) * 5 + i]); // Send character
         }
@@ -433,15 +484,15 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
         column += (5 + spacing);  // 5 pixels for character + spacing
         if (column + 5 > OLED_WIDTH) {
             // Move to the next line (page)
-            column = 0;
+            column = COL_OFFSET;
             line++;
             if (line >= OLED_HEIGHT / 8) {
                 // Prevent exceeding vertical limit
                 return;
             }
             oled_send_command(0xB0 + line); // Set new page address
-            oled_send_command(0x00);        // Reset column address to 0
-            oled_send_command(0x10);
+            oled_send_command(column & 0x0F);       // Set lower column address
+            oled_send_command(0x10 | (column >> 4)); // Set higher column address
         }
     }
 }

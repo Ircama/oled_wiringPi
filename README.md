@@ -10,7 +10,7 @@ Tested with a Raspberry Pi Zero W 1.1 and software I2C. Compatible with the soft
 ## Key Features
 - **Bare Metal I2C Implementation**: Uses bit-banging instead of kernel I2C drivers, providing direct GPIO control
 - **Minimal Resource Usage**: Small executable footprint and efficient processing
-- **Flexible Text Positioning**: Supports custom line and column positioning
+- **Flexible Text Positioning**: Supports custom line and column positioning and automatically wraps on long texts
 - **Configurable I2C Timing**: Adjustable delay for optimal communication
 
 ## Installation
@@ -26,6 +26,8 @@ Tested with a Raspberry Pi Zero W 1.1 and software I2C. Compatible with the soft
 - `-k, --scl=NUM`: Specify the GPIO pin number for I2C SCL (Clock line); default is 23 (BCM GPIO23)
 - `-d, --delay=NUM`: Set the I2C timing delay for bit-banging operations; default is 5; le lower, the faster. Avoid 1 (too small) or numbers bigger than 10. 2 or 3 look still good.
 
+Notice that the hw or sw I2C configuration of the device (set in config.ini) can be different from the usage of these GPIO ports, because this tool embeds an own software I2C stack.
+
 ### Display Control
 - `-n, --no-clear`: Prevent screen clearing before writing new content
 - `-s, --spacing=NUM`: Configure spacing between characters or elements (default is 1; it can also be 0)
@@ -39,6 +41,15 @@ Tested with a Raspberry Pi Zero W 1.1 and software I2C. Compatible with the soft
 - `-?, --help`: Display comprehensive help information
 - `--usage`: Show brief usage instructions
 - `-V, --version`: Display program version information
+
+### Special characters
+
+- `^n`: New line (wrap line and reset to column 0)
+- `^r`: Carriage return (reset to column 0 without wrapping line)
+- `^b`: Backspace (cursor left)
+- `^u`: Up one line
+- `^d`: Down one line
+- `^^`: Character `^`
 
 ## Usage Examples
 
@@ -66,3 +77,61 @@ Tested with a Raspberry Pi Zero W 1.1 and software I2C. Compatible with the soft
     ./oled_display -l 6 -c 0 -d 2 -n -t "Maecenas et rutrum"
     ./oled_display -l 7 -c 0 -d 2 -n -t "tellus, eu pulvinar.."
     ```
+
+    ```bash
+    ./oled_display -l 0 -c 0 -d 2 -t "Lorem ipsum dolor sitamet, consectetur^nadipiscing elit. Sed^nimperdiet sodales leoat faucibus turpis^nullamcorper ut.^nMaecenas et rutrum^ntellus, eu pulvinar.."
+    ```
+
+## Using the tool to show boot and shutdown messages
+
+### on boot at early stage
+
+```bash
+sudo vi /etc/systemd/system/boot_message.service
+```
+
+Content:
+
+```
+[Unit]
+Description=Display boot message to OLED
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStart=/home/pi/oled/oled_display -c 0 -d 2 -s 2 -t " Going on..."
+
+[Install]
+WantedBy=sysinit.target
+```
+
+### on boot (later), reboot, shutdown
+
+```bash
+sudo vi /etc/systemd/system/reboot_message.service
+```
+
+Content:
+
+```
+[Unit]
+Description=Display message to OLED on boot (later), reboot, shutdown
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/home/pi/oled/oled_display -l 3 -c 0 -d 2 -t " Almost ready..."
+ExecStop=/home/pi/oled/oled_display -l 2 -c 0 -d 2 -t " Going down..."
+TimeoutSec=infinity
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Common systemd configuration
+
+```bash
+sudo systemctl enable boot.target
+sudo systemctl enable reboot.target
+sudo systemctl daemon-reload
+```
