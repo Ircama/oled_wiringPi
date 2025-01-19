@@ -1,3 +1,6 @@
+// SSD1306 OLED 1,3" 128x64 Pixel I2C
+// https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+
 #include <argp.h>
 #include <wiringPi.h>
 #include <stdio.h>
@@ -7,6 +10,9 @@
 #define SDA_PIN 22  // Data pin
 #define SCL_PIN 23  // Clock pin
 #define M_DELAY 5 // I2C default microdelay
+#define TOTAL_PAGES 8 // 8 pages for 64 pixels; pages 0 to 7. Set to 4 for the 128x32 version.
+// Each page is 8 pixels high, and has 128 vertical strips 1 pixel wide
+#define FONT_WIDE 5 // usie 5x7 fonts in 5x8-bit matrix
 
 #define COL_OFFSET 2
     // Correct column offset: move by 2 pixels to align properly
@@ -88,7 +94,7 @@ void oled_init_SSD1306(void) {
     oled_send_command(0xD5); // Set display clock divide ratio/oscillator frequency
     oled_send_command(0x80); // Default suggested value (0x80)
     oled_send_command(0xA8); // Set multiplex ratio
-    oled_send_command(0x3F); // 1/64 duty (for 128x64 OLED)
+    oled_send_command(0x3F); // 1/64 duty (for 128x64 OLED). Set to 0x1f for the 128x32 version
 
     oled_send_command(0xD3); // Set display offset
     oled_send_command(0x00); // No offset
@@ -101,7 +107,7 @@ void oled_init_SSD1306(void) {
     oled_send_command(0xC8); // Set COM output scan direction (C8 for remapped)
 
     oled_send_command(0xDA); // Set COM pins hardware configuration
-    oled_send_command(0x12); // Alternative COM configuration for 128x64
+    oled_send_command(0x12); // Alternative COM configuration for 128x64. Set to 0x02 for the 128x32 version
 
     oled_send_command(0x81); // Set contrast control
     oled_send_command(0x7F); // Contrast value (0x7F is recommended)
@@ -121,13 +127,20 @@ void oled_init_SSD1306(void) {
     oled_send_command(0xAF); // Display ON
 }
 
+/*
+The size of the RAM is 128 x 64 bits and the RAM is divided into eight pages,
+from PAGE0 to PAGE7, which are used for monochrome 128x64 dot matrix display.
+*/
+
 void oled_clear_SSD1306(void) {
+    //oled_send_command(0xAE); // Display OFF
+
     // Send the common commands to set the column address range
     oled_send_command(0x21);              // Set column address
     oled_send_command(0x00);              // Start column address (0x00)
     oled_send_command(0x7F);              // End column address (0x7F for 128 pixels)
 
-    for (int page = 0; page < 8; page++) {  // 8 pages for 64 pixels; pages 0 to 7
+    for (int page = 0; page < TOTAL_PAGES; page++) {
         oled_send_command(0xB0 + page);     // Set page address (0xB0-0xB7)
 
         // Send a block of 132 zeroes in one go to clear the page
@@ -135,8 +148,12 @@ void oled_clear_SSD1306(void) {
             oled_send_data(0x00);  // Send zero to clear the screen
         }
     }
+
+    //oled_send_command(0xAF); // Display ON
 }
 
+// 5x7 font data for characters - each character is 5 bits wide, 7 bits high
+// The character matrix is 5x8 bits, with 255 chars (total matrix is 255x5x8 bits).
 const unsigned char font[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00,
 	0x3E, 0x5B, 0x4F, 0x5B, 0x3E,
@@ -400,7 +417,7 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
     // Calculate default positions if not provided
     int text_length = strlen(text);
     if (column < 0) {
-        column = (OLED_WIDTH - (text_length * 6)) / 2; // Center horizontally
+        column = (OLED_WIDTH - (text_length * (FONT_WIDE + spacing))) / 2; // Center horizontally
     }
     if (line < 0) {
         line = (OLED_HEIGHT / 8) / 2; // Center vertically (page-based)
@@ -471,8 +488,8 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
             text += 1;
         }
 
-        for (int i = 0; i < 5; i++) {
-            oled_send_data(font[(*text) * 5 + i]); // Send character
+        for (int i = 0; i < FONT_WIDE; i++) {
+            oled_send_data(font[(*text) * FONT_WIDE + i]); // Send character
         }
         for (int i=0;i<spacing;i++)
             oled_send_data(0x00); // Spacing
@@ -481,8 +498,8 @@ void oled_display_text(const char *text, int line, int column, int spacing) {
         text++;
 
         // Check for horizontal overflow (wrap text if necessary)
-        column += (5 + spacing);  // 5 pixels for character + spacing
-        if (column + 5 > OLED_WIDTH) {
+        column += (FONT_WIDE + spacing);  // FONT_WIDE pixels for character + spacing
+        if (column + FONT_WIDE > OLED_WIDTH) {
             // Move to the next line (page)
             column = COL_OFFSET;
             line++;
